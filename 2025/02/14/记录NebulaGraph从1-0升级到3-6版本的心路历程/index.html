@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>记录NebulaGraph从1.0升级到3.6版本的心路历程 | 技术博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="环境描述首先来说下本文的背景信息，主要是从原先用了多年的 1.0 版本升级到 NebulaGraph 最新的 v3.6.0 版本。下面是本文可能会用到的前提信息：  当前 nebula 版本：1.0 目标 nebula 版本：3.6 nebula-client版本：com.vesoft:client:1.0.0-rc4.20200323  一、为什么要升级?相信 Nebula 社区有很多和我类似用">
+<meta property="og:type" content="article">
+<meta property="og:title" content="记录NebulaGraph从1.0升级到3.6版本的心路历程">
+<meta property="og:url" content="http://example.com/2025/02/14/%E8%AE%B0%E5%BD%95NebulaGraph%E4%BB%8E1-0%E5%8D%87%E7%BA%A7%E5%88%B03-6%E7%89%88%E6%9C%AC%E7%9A%84%E5%BF%83%E8%B7%AF%E5%8E%86%E7%A8%8B/index.html">
+<meta property="og:site_name" content="技术博客">
+<meta property="og:description" content="环境描述首先来说下本文的背景信息，主要是从原先用了多年的 1.0 版本升级到 NebulaGraph 最新的 v3.6.0 版本。下面是本文可能会用到的前提信息：  当前 nebula 版本：1.0 目标 nebula 版本：3.6 nebula-client版本：com.vesoft:client:1.0.0-rc4.20200323  一、为什么要升级?相信 Nebula 社区有很多和我类似用">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://discuss-cdn.nebula-graph.com.cn/uploads/default/original/3X/0/7/07f1594ec9ef9f5c17fbe1cbd12a9a5e70ba2206.png">
+<meta property="og:image" content="https://discuss-cdn.nebula-graph.com.cn/uploads/default/original/3X/7/e/7e19f5e99f5e6fa3141e95b7fafd97887745d0b3.png">
+<meta property="og:image" content="https://discuss-cdn.nebula-graph.com.cn/uploads/default/original/3X/e/8/e8ad17f429c2bd7e624783600ec9ce8155cda0da.png">
+<meta property="og:image" content="https://discuss-cdn.nebula-graph.com.cn/uploads/default/original/3X/1/a/1a01a4cc7cdfd31abdaa5dd31ad085f273945c49.png">
+<meta property="og:image" content="https://discuss-cdn.nebula-graph.com.cn/uploads/default/original/3X/8/b/8ba5b083649742e8d9fddbac5c7a43b8c36bcce3.png">
+<meta property="og:image" content="https://discuss-cdn.nebula-graph.com.cn/uploads/default/original/3X/0/7/074dd0852ca6120526058063ed0790bc878bc9db.png">
+<meta property="og:image" content="https://discuss-cdn.nebula-graph.com.cn/uploads/default/original/3X/9/9/99d267f700a4e4370e4c91b647fa45d90b86495c.png">
+<meta property="og:image" content="https://discuss-cdn.nebula-graph.com.cn/uploads/default/optimized/3X/3/f/3f5bf7d1f0b5a124c622bfc8b2aa3123809b48f7_2_823x750.png">
+<meta property="og:image" content="https://discuss-cdn.nebula-graph.com.cn/uploads/default/optimized/3X/a/d/ad99b2ad5e6aff1555659e00e3a6e3992ce2e315_2_960x748.png">
+<meta property="og:image" content="https://discuss-cdn.nebula-graph.com.cn/uploads/default/optimized/3X/f/9/f902bdbf155ad00cbfe508cd9caa8f9bb0a6d995_2_894x750.png">
+<meta property="og:image" content="https://discuss-cdn.nebula-graph.com.cn/uploads/default/original/3X/f/9/f9e23385331cd3d46399717eac9fdf4c550033f6.png">
+<meta property="article:published_time" content="2025-02-14T08:39:25.000Z">
+<meta property="article:modified_time" content="2025-02-14T08:43:07.837Z">
+<meta property="article:author" content="Jiangyiwang">
+<meta property="article:tag" content="图数据库">
+<meta property="article:tag" content="NebulaGraph">
+<meta property="article:tag" content="升级">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://discuss-cdn.nebula-graph.com.cn/uploads/default/original/3X/0/7/07f1594ec9ef9f5c17fbe1cbd12a9a5e70ba2206.png">
+  
+    <link rel="alternate" href="/atom.xml" title="技术博客" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">技术博客</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">阿旺, 作者简介：目前就职于某头部金融科技公司，13年Java开发，开源NebulaGraph图数据库Contributer和Committer, 热衷于疑难问题解决</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-记录NebulaGraph从1-0升级到3-6版本的心路历程" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2025/02/14/%E8%AE%B0%E5%BD%95NebulaGraph%E4%BB%8E1-0%E5%8D%87%E7%BA%A7%E5%88%B03-6%E7%89%88%E6%9C%AC%E7%9A%84%E5%BF%83%E8%B7%AF%E5%8E%86%E7%A8%8B/" class="article-date">
+  <time class="dt-published" datetime="2025-02-14T08:39:25.000Z" itemprop="datePublished">2025-02-14</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      记录NebulaGraph从1.0升级到3.6版本的心路历程
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="环境描述"><a href="#环境描述" class="headerlink" title="环境描述"></a>环境描述</h2><p>首先来说下本文的背景信息，主要是从原先用了多年的 1.0 版本升级到 NebulaGraph 最新的 v3.6.0 版本。下面是本文可能会用到的前提信息：</p>
+<ul>
+<li>当前 nebula 版本：1.0</li>
+<li>目标 nebula 版本：3.6</li>
+<li>nebula-client版本：com.vesoft:client:1.0.0-rc4.20200323</li>
+</ul>
+<h2 id="一、为什么要升级"><a href="#一、为什么要升级" class="headerlink" title="一、为什么要升级?"></a>一、为什么要升级?</h2><p>相信 Nebula 社区有很多和我类似用着非最新发行版的企业用户，因为为了保障业务的稳定运行，依旧用着 2.x 版本，或者是和我们一样用着 1.0 版本。所以，很多人会问：升级？为什么要升级呢？</p>
+<p>这是我的答案：3.6 版本，或者说最新发行版，会比 1.0 版本具有<strong>更高的可维护性和稳定性</strong>、<strong>更完善的周边生态</strong>。此外 1.0 版本 nebula <strong>出问题基本上很难得到解决</strong>，另外<strong>扩缩容比较麻烦</strong>。</p>
+<h2 id="二、升级需要考虑的点？"><a href="#二、升级需要考虑的点？" class="headerlink" title="二、升级需要考虑的点？"></a>二、升级需要考虑的点？</h2><p>和许多依旧用着老版本的用户一样，我们其实也是做了一段时间的挣扎选择了升级。下面是我们想到的升级需要考虑到的点：</p>
+<ol>
+<li>nGQL 的兼容性；</li>
+<li>原地升级 or 导出导入的方式？这里我们测试过，原地升级经测试不可用，而且还会影响在线业务，风险大；</li>
+<li>如何保证升级不影响线上的业务；</li>
+<li>如何处理升级时产生的增量数据；</li>
+<li>升级后如何数据一致性比对；</li>
+<li>如何进行新老 nebula 替换；</li>
+</ol>
+<p>如果要排个优先级的话，3 5 6 应该是重中之重。</p>
+<h2 id="三、升级方案"><a href="#三、升级方案" class="headerlink" title="三、升级方案"></a>三、升级方案</h2><p><img src="https://discuss-cdn.nebula-graph.com.cn/uploads/default/original/3X/0/7/07f1594ec9ef9f5c17fbe1cbd12a9a5e70ba2206.png" alt="image|690x140"></p>
+<p>这是大致的升级方案，大体分为三个部分：</p>
+<h3 id="升级前准备"><a href="#升级前准备" class="headerlink" title="升级前准备"></a>升级前准备</h3><p>有些准备工作需要完成：</p>
+<ol>
+<li>收集、整合业务线相关的所有 nGQL 并进行 3.6 版本测试，修改 nGQL 以兼容 3.6 版本 nebula。</li>
+</ol>
+<blockquote>
+<p>注意：这里并非在原来的业务应用上进行更新，而是复制一个新的出来，因为同一个应用无法兼容两套不同版本的 nebula。</p>
+</blockquote>
+<ol start="2">
+<li><p>编写 nebula 同步服务，这里无法使用 nebula-spark-connector 进行同步，因为 nebula 版本跨的太大了。</p>
+</li>
+<li><p>编写数据流量比对逻辑。</p>
+</li>
+<li><p>搭建 nebula3.6 版本新集群环境，这里可以临时关闭自动 Compaction 功能，来加快写入速度。</p>
+</li>
+</ol>
+<h3 id="执行升级"><a href="#执行升级" class="headerlink" title="执行升级"></a>执行升级</h3><p>我们这里是借助了 MQ（消息队列，Message Queue）来中间处理了下数据。涉及到 MQ 的步骤有：</p>
+<ol>
+<li>开启同步过程增量数据写入 MQ 进行积压；</li>
+<li>开启 nebula 数据同步，应用 A 从 nebula1.0 中读取出来发送到 MQ，然后应用 B 消费 MQ 消息写入到 nebula3.6；</li>
+<li>同步完毕后将 MQ 中积压的增量数据写入 nebula3.6；</li>
+</ol>
+<h3 id="升级后处理"><a href="#升级后处理" class="headerlink" title="升级后处理"></a>升级后处理</h3><p>这里再简述下升级之后需要做的操作：</p>
+<ol>
+<li>数据一致性比对，通过流量复制的方式发送到新的应用上进行重放结果比对；</li>
+<li>逐步切流量到新 nebula 3.6 集群；</li>
+</ol>
+<h3 id="内核升级的详细设计"><a href="#内核升级的详细设计" class="headerlink" title="内核升级的详细设计"></a>内核升级的详细设计</h3><p>名词说明：</p>
+<ul>
+<li>biz-app：业务应用 App，作用连接 nebula 1.0 进行图数据操作；</li>
+<li>biz-app-new：biz-app 的复制版本，只不过改成了连接 3.6 版本 nebula，并更新 nGQL 以兼容 nebula  3.6；</li>
+<li>nebula-sink-app：用于接收 nebula 3.6 版本的更新语句消息，并写入到 nebula 3.6 集群；</li>
+</ul>
+<h4 id="第一步：开启增量数据写入-MQ-积压"><a href="#第一步：开启增量数据写入-MQ-积压" class="headerlink" title="第一步：开启增量数据写入 MQ 积压"></a>第一步：开启增量数据写入 MQ 积压</h4><p><img src="https://discuss-cdn.nebula-graph.com.cn/uploads/default/original/3X/7/e/7e19f5e99f5e6fa3141e95b7fafd97887745d0b3.png" alt="image|538x497"></p>
+<h4 id="第二步：同步-nebula1-0-数据到-3-6-集群"><a href="#第二步：同步-nebula1-0-数据到-3-6-集群" class="headerlink" title="第二步：同步 nebula1.0 数据到 3.6 集群"></a>第二步：同步 nebula1.0 数据到 3.6 集群</h4><p><img src="https://discuss-cdn.nebula-graph.com.cn/uploads/default/original/3X/e/8/e8ad17f429c2bd7e624783600ec9ce8155cda0da.png" alt="image|690x308"></p>
+<h4 id="第三步：同步完毕后消费增量数据"><a href="#第三步：同步完毕后消费增量数据" class="headerlink" title="第三步：同步完毕后消费增量数据"></a>第三步：同步完毕后消费增量数据</h4><p><img src="https://discuss-cdn.nebula-graph.com.cn/uploads/default/original/3X/1/a/1a01a4cc7cdfd31abdaa5dd31ad085f273945c49.png" alt="image|690x484"></p>
+<h4 id="第四步：数据一致性比对"><a href="#第四步：数据一致性比对" class="headerlink" title="第四步：数据一致性比对"></a>第四步：数据一致性比对</h4><p><img src="https://discuss-cdn.nebula-graph.com.cn/uploads/default/original/3X/8/b/8ba5b083649742e8d9fddbac5c7a43b8c36bcce3.png" alt="image|690x407"></p>
+<h4 id="第五步：nebula-3-6-集群切流"><a href="#第五步：nebula-3-6-集群切流" class="headerlink" title="第五步：nebula 3.6 集群切流"></a>第五步：nebula 3.6 集群切流</h4><p><img src="https://discuss-cdn.nebula-graph.com.cn/uploads/default/original/3X/0/7/074dd0852ca6120526058063ed0790bc878bc9db.png" alt="image|690x479"></p>
+<h3 id="nebula-client-3-6-版本-SDK-改造"><a href="#nebula-client-3-6-版本-SDK-改造" class="headerlink" title="nebula-client 3.6 版本 SDK 改造"></a>nebula-client 3.6 版本 SDK 改造</h3><p>本次客户端的改造，主要是支持下面功能：主备写入同步、主备读取分流、读写 SessionPool 隔离、连接池监控、nGQL 执行监控。</p>
+<p><img src="https://discuss-cdn.nebula-graph.com.cn/uploads/default/original/3X/9/9/99d267f700a4e4370e4c91b647fa45d90b86495c.png" alt="image|690x317"></p>
+<ul>
+<li>主备写入同步：接收到更新请求时，同步更新主库，通过 MQ 方式异步更新备库，主库同步更新失败时会自动降级成通过 MQ 异步处理</li>
+<li>主备读取分流：接收到查询请求时，先获取主备流量权重配置，根据权重配置进行流量划分</li>
+<li>读写 SessionPool 隔离：为了避免读写流量差距过大导致其中一方有问题，比如：查询流量 1,000 QPS，更新才 1 TPS，就有可能存在更新一直获取不到 Session</li>
+<li>连接池监控：监控获取连接、释放连接、活动连接数、空闲连接数目，利于快速排查问题</li>
+<li>nGQL 执行监控：监控不同 Space 不同命令的 nGQL 执行耗时和流量，也可以输出慢 nGQL 查询语句</li>
+</ul>
+<h2 id="四、遇到的问题以及解决方案"><a href="#四、遇到的问题以及解决方案" class="headerlink" title="四、遇到的问题以及解决方案"></a>四、遇到的问题以及解决方案</h2><p>当然升级不是一步到位，我们也遇到了不少的问题。这里罗列了几个印象深刻的错误：</p>
+<ul>
+<li>导出 Timestamp 属性字段报错</li>
+<li>无法导出多版本数据（Schema 发生更改）</li>
+<li>每次 Scan 中断只能从头开始，无法接着上次的 cursor 继续导出</li>
+<li>指定扫描单个 Edge 或者 Tag 出现磁盘 IO 使用率100%（见：<a target="_blank" rel="noopener" href="https://discuss.nebula-graph.com.cn/t/topic/15186">nebula 1.0 版本导出部分边或者点出现磁盘 IO 负载过高</a>）</li>
+</ul>
+<p>好在的是，这些问题我们都顺利解决了。下面来讲讲我们的解决方案：</p>
+<h3 id="导出-Timestamp-属性字段报错"><a href="#导出-Timestamp-属性字段报错" class="headerlink" title="导出 Timestamp 属性字段报错"></a>导出 Timestamp 属性字段报错</h3><p>这个问题产生的原因是因为 RowReader.java 中不支持 TIMESPTMP 字段。</p>
+<p><img src="https://discuss-cdn.nebula-graph.com.cn/uploads/default/optimized/3X/3/f/3f5bf7d1f0b5a124c622bfc8b2aa3123809b48f7_2_823x750.png" alt="image|549x500"></p>
+<p>解决方案：</p>
+<p>重写 RowReader 代码支持 Timestamp 字段：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line">public RowReader(Schema schema, long schemaVersion) &#123;</span><br><span class="line">        this.schemaVersion = schemaVersion;</span><br><span class="line">        int idx = 0;</span><br><span class="line">        for (ColumnDef columnDef : schema.columns) &#123;</span><br><span class="line">            PropertyDef.PropertyType type = PropertyDef.PropertyType.getEnum(columnDef.getType().getType());</span><br><span class="line">            String name = columnDef.getName();</span><br><span class="line">            switch (type) &#123;</span><br><span class="line">                case BOOL:</span><br><span class="line">                    defs.add(new Pair(name, Boolean.class.getName()));</span><br><span class="line">                    break;</span><br><span class="line">                case INT:</span><br><span class="line">                // 这里加入TIMESPTMAP属性识别</span><br><span class="line">                case TIMESTAMP:</span><br><span class="line">                case VID:</span><br><span class="line">                    defs.add(new Pair(name, Long.class.getName()));</span><br><span class="line">                    break;</span><br><span class="line">                case FLOAT:</span><br><span class="line">                    defs.add(new Pair(name, Float.class.getName()));</span><br><span class="line">                    break;</span><br><span class="line">                case DOUBLE:</span><br><span class="line">                    defs.add(new Pair(name, Double.class.getName()));</span><br><span class="line">                    break;</span><br><span class="line">                case STRING:</span><br><span class="line">                    defs.add(new Pair(name, byte[].class.getName()));</span><br><span class="line">                    break;</span><br><span class="line">                default:</span><br><span class="line">                    throw new IllegalArgumentException(&quot;Invalid type in schema: &quot; + type);</span><br><span class="line">            &#125;</span><br><span class="line">            types.add(type);</span><br><span class="line">            propertyNameIndex.put(name, idx);</span><br><span class="line">            idx++;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">public Property[] decodeValue(byte[] value, long schemaVersion) &#123;</span><br><span class="line">        List&lt;byte[]&gt; decodedResult = NebulaCodec.decode(value, defs.toArray(new Pair[defs.size()]),</span><br><span class="line">                schemaVersion);</span><br><span class="line">        Property[] properties = new Property[defs.size()];</span><br><span class="line">        try &#123;</span><br><span class="line">            for (int i = 0; i &lt; defs.size(); i++) &#123;</span><br><span class="line">                String field = defs.get(i).getField();</span><br><span class="line">                PropertyType type = types.get(i);</span><br><span class="line">                byte[] data = decodedResult.get(i);</span><br><span class="line">                switch (types.get(i)) &#123;</span><br><span class="line">                    case BOOL:</span><br><span class="line">                        properties[i] = getBoolProperty(field, data);</span><br><span class="line">                        break;</span><br><span class="line">                    case INT:</span><br><span class="line">                   // 加入TIMESTAMP识别</span><br><span class="line">                    case TIMESTAMP:</span><br><span class="line">                    case VID:</span><br><span class="line">                        properties[i] = getIntProperty(field, data);</span><br><span class="line">                        break;</span><br><span class="line">                    case FLOAT:</span><br><span class="line">                        properties[i] = getFloatProperty(field, data);</span><br><span class="line">                        break;</span><br><span class="line">                    case DOUBLE:</span><br><span class="line">                        properties[i] = getDoubleProperty(field, data);</span><br><span class="line">                        break;</span><br><span class="line">                    case STRING:</span><br><span class="line">                        properties[i] = getStringProperty(field, data);</span><br><span class="line">                        break;</span><br><span class="line">                    default:</span><br><span class="line">                        throw new IllegalArgumentException(&quot;Invalid type in schema: &quot; + type);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch (BufferUnderflowException e) &#123;</span><br><span class="line">            LOGGER.error(&quot;Decode value failed: &quot; + e.getMessage());</span><br><span class="line">        &#125;</span><br><span class="line">        return properties;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="无法导出多版本数据（Schema-发生更改）"><a href="#无法导出多版本数据（Schema-发生更改）" class="headerlink" title="无法导出多版本数据（Schema 发生更改）"></a>无法导出多版本数据（Schema 发生更改）</h3><p>这个原因是 ScanVertexProcessor 和 ScanEdgeProcessor 仅支持一个版本的数据解析：</p>
+<p><img src="https://discuss-cdn.nebula-graph.com.cn/uploads/default/optimized/3X/a/d/ad99b2ad5e6aff1555659e00e3a6e3992ce2e315_2_960x748.png" alt="image|640x499"></p>
+<p>解决方案：重写 ScanVertexProcessor 和 ScanEdgeProcessor 自动识别多版本数据：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line">public TagItem getSpecialVersionTagItem(String spaceName, int tagId, long version) &#123;</span><br><span class="line">        if (!spaceTagItemVersions.containsKey(spaceName)) &#123;</span><br><span class="line">            Map&lt;Integer, Map&lt;Long, TagItem&gt;&gt; tagVersionMap = Maps.newHashMap();</span><br><span class="line">            List&lt;TagItem&gt; allTagItemList = getTags(spaceName);</span><br><span class="line">            if (!allTagItemList.isEmpty()) &#123;</span><br><span class="line">                allTagItemList.forEach(tagItem -&gt; tagVersionMap.computeIfAbsent(tagItem.getTag_id(), k -&gt; Maps.newHashMap()).put(tagItem.getVersion(), tagItem));</span><br><span class="line">                spaceTagItemVersions.put(spaceName, tagVersionMap);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        Map&lt;Integer, Map&lt;Long, TagItem&gt;&gt; tagVersionMap = spaceTagItemVersions.get(spaceName);</span><br><span class="line">        if (Objects.isNull(tagVersionMap)) &#123;</span><br><span class="line">            return null;</span><br><span class="line">        &#125;</span><br><span class="line">        return tagVersionMap.getOrDefault(tagId, Collections.emptyMap()).get(version);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">private RowReader getRowReader(String spaceName, ScanVertex scanTag, Map&lt;Integer, RowReader&gt; readers) &#123;</span><br><span class="line">        int tagId = scanTag.getTagId();</span><br><span class="line">        // 解析当前tag数据的schema版本</span><br><span class="line">        long schemaVersion = NebulaUtils.parseSchemaVersion(scanTag.getValue());</span><br><span class="line">        Map&lt;Integer, Map&lt;Long, RowReader&gt;&gt; tagVersionReaderMap = spaceTagVersionReaders.computeIfAbsent(spaceName, k -&gt; new ConcurrentHashMap&lt;&gt;());</span><br><span class="line">        Map&lt;Long, RowReader&gt; versionReaderMap = tagVersionReaderMap.computeIfAbsent(tagId, k -&gt; new ConcurrentHashMap&lt;&gt;());</span><br><span class="line">        RowReader reader = versionReaderMap.get(schemaVersion);</span><br><span class="line">        if (reader != null) &#123;</span><br><span class="line">            return reader;</span><br><span class="line">        &#125;</span><br><span class="line">        //构建对应schema版本的RowReader</span><br><span class="line">        TagItem tagItem = metaClient.getSpecialVersionTagItem(spaceName, tagId, schemaVersion);</span><br><span class="line">        if (tagItem != null) &#123;</span><br><span class="line">            log.debug(&quot;Add special version tagItem | spaceName:&#123;&#125; | tagId:&#123;&#125; | schemaVersion:&#123;&#125;&quot;, spaceName, tagId, schemaVersion);</span><br><span class="line">            versionReaderMap.computeIfAbsent(schemaVersion, k -&gt; new RowReader(tagItem.schema, tagItem.version));</span><br><span class="line">            return versionReaderMap.get(schemaVersion);</span><br><span class="line">        &#125;</span><br><span class="line">        RowReader rowReader = readers.get(tagId);</span><br><span class="line">        if (rowReader == null) &#123;</span><br><span class="line">            log.error(&quot;Not match vertex reader | spaceName:&#123;&#125; | tagId:&#123;&#125; | schemaVersion:&#123;&#125; | data=&#123;&#125;&quot;, spaceName, tagId, schemaVersion, Hex.encodeHexString(scanTag.value));</span><br><span class="line">        &#125;</span><br><span class="line">        return rowReader;</span><br><span class="line">    &#125;</span><br><span class="line">//解析数据的schema版本，根据nebula源码翻译成的java代码</span><br><span class="line">public static long parseSchemaVersion(byte[] row) &#123;</span><br><span class="line">        if (row == null || row.length == 0) &#123;</span><br><span class="line">            System.err.println(&quot;Row data is empty, so there is no schema version&quot;);</span><br><span class="line">            return 0;</span><br><span class="line">        &#125;</span><br><span class="line">        // The first three bits indicate the number of bytes for the</span><br><span class="line">        // schema version. If the number is zero, no schema version</span><br><span class="line">        // presents</span><br><span class="line">        int verBytes = row[0] &gt;&gt; 5;</span><br><span class="line">        int ver = 0;</span><br><span class="line">        if (verBytes &gt; 0) &#123;</span><br><span class="line">            if (verBytes + 1 &gt; row.length) &#123;</span><br><span class="line">                // Data is too short</span><br><span class="line">                // System.err.println(&quot;Row data is too short&quot;);</span><br><span class="line">                return 0;</span><br><span class="line">            &#125;</span><br><span class="line">            // Schema Version is stored in Little Endian</span><br><span class="line">            for (int i = 0; i &lt; verBytes; i++) &#123;</span><br><span class="line">                ver |= ((int) row[i + 1] &lt;&lt; (8 * i));</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return ver;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="每次-Scan-中断只能从头开始，无法接着上次的-cursor-继续导出"><a href="#每次-Scan-中断只能从头开始，无法接着上次的-cursor-继续导出" class="headerlink" title="每次 Scan 中断只能从头开始，无法接着上次的 cursor 继续导出"></a>每次 Scan 中断只能从头开始，无法接着上次的 cursor 继续导出</h3><p>这个问题发生的原因是因为 StorageClient 中的 scan 方法并未支持 cursor 参数传入：<br><img src="https://discuss-cdn.nebula-graph.com.cn/uploads/default/optimized/3X/f/9/f902bdbf155ad00cbfe508cd9caa8f9bb0a6d995_2_894x750.png" alt="image|596x500"></p>
+<p>解决方案：重写 StorageClient 提供可传入 cursor 参数，每次 next 之后将 cursor 保存到数据库中，中断重新跑的时候使用之前的 cursor：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">//增加cursor参数</span><br><span class="line">public Iterator&lt;ScanVertexResponse&gt; scanVertex(</span><br><span class="line">            String space, int part, Map&lt;String, List&lt;String&gt;&gt; returnCols, boolean allCols,</span><br><span class="line">            int limit, long startTime, long endTime, byte[] cursor) throws IOException &#123;</span><br><span class="line">        HostAndPort leader = getLeader(space, part);</span><br><span class="line">        if (Objects.isNull(leader)) &#123;</span><br><span class="line">            throw new IllegalArgumentException(&quot;Part &quot; + part + &quot; not found in space &quot; + space);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        int spaceId = metaClient.getSpaceIdFromCache(space);</span><br><span class="line">        ScanVertexRequest request = new ScanVertexRequest();</span><br><span class="line">        Map&lt;Integer, List&lt;PropDef&gt;&gt; columns = getVertexReturnCols(space, returnCols);</span><br><span class="line">        request.setSpace_id(spaceId)</span><br><span class="line">                .setPart_id(part)</span><br><span class="line">                .setReturn_columns(columns)</span><br><span class="line">                .setAll_columns(allCols)</span><br><span class="line">                .setLimit(limit)</span><br><span class="line">                .setStart_time(startTime)</span><br><span class="line">                .setEnd_time(endTime)</span><br><span class="line">               //设置cursor参数到request中</span><br><span class="line">                .setCursor(cursor);</span><br><span class="line"></span><br><span class="line">        return doScanVertex(space, leader, request);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="指定扫描单个-Edge-或者-Tag-出现磁盘-IO-使用率-100"><a href="#指定扫描单个-Edge-或者-Tag-出现磁盘-IO-使用率-100" class="headerlink" title="指定扫描单个 Edge 或者 Tag 出现磁盘 IO 使用率 100%"></a>指定扫描单个 Edge 或者 Tag 出现磁盘 IO 使用率 100%</h3><p>问题的原因：当 Space 中部分点或者边数量极大（比如几百亿），部分点或者边数据极小（比如几百万），当扫描极小的点或者边的时候就会出现磁盘 IO 使用率 100%；</p>
+<p>解决方案：以扫描所有的点或者边，不指定单个 Edge 或者 Tag。</p>
+<h2 id="五、nebula-同步服务设计"><a href="#五、nebula-同步服务设计" class="headerlink" title="五、nebula 同步服务设计"></a>五、nebula 同步服务设计</h2><p>设计原则：</p>
+<ul>
+<li>导出时不能影响线上 nebula 服务</li>
+<li>尽量充分使用 nebula 服务资源进行同步</li>
+<li>能够实时监控同步进度</li>
+<li>可以随时 停止&#x2F;启动 同步任务</li>
+</ul>
+<p>设计要点：</p>
+<ul>
+<li>自动适配不同时间段，不同导出频率和单次扫描数据量</li>
+<li>根据 nebula 服务器的压力自动调整扫描任务数和频率</li>
+<li>自动将扫描任务均衡到每台 nebula 服务器，避免出现 nebula 集群服务器负载不一致的情况</li>
+</ul>
+<h3 id="重点问题解决"><a href="#重点问题解决" class="headerlink" title="重点问题解决"></a>重点问题解决</h3><p>这里着重讲讲如何解决一些具体的问题：</p>
+<p>问题：<strong>每台 nebula-storaged 节点有着不同的 partition 分布，处理扫描任务越多 nebula-storaged 服务器负载就越高，如何实现每台 nebula-storaged 处理 Scan 扫描任务的数量一样？</strong></p>
+<p>解决方案：</p>
+<ol>
+<li>改造 StorageClient 支持指定 storage address 进行 scan 操作；</li>
+<li>通过 nebula-client 执行 show parts 拿到每个 part 对应的 leader 分布；</li>
+<li>根据 part 对应 leader 分布，即可进行指定 part 同步均衡到每台 nebula-storaged 服务器上。</li>
+</ol>
+<p>问题：<strong>如何做自动同步流控，主要针对源 nebula，也就是从哪里进行导出</strong>。</p>
+<p>主要从 3 个方面解决问题：</p>
+<ol>
+<li>扫描频率</li>
+<li>扫描行数</li>
+<li>scan 任务数</li>
+</ol>
+<p>扫描流控：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//开启SCAN操作并指定游标，此游标是上次scan保存下来的</span></span><br><span class="line">                Iterator&lt;RESP&gt; iterator = scan(client, space, tagOrEdgeNameList, part, statusDomain.getNextCursor());</span><br><span class="line">                <span class="type">boolean</span> <span class="variable">isScanLimitConfigIterator</span> <span class="operator">=</span> (iterator <span class="keyword">instanceof</span> ScanLimitConfigIterator);</span><br><span class="line">                <span class="keyword">while</span> (iterator.hasNext()) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (isScanLimitConfigIterator) &#123;</span><br><span class="line">                        <span class="comment">//设置scan行数，这里根据不同的时间段、机器的负载返回不同的值</span></span><br><span class="line">                        <span class="type">int</span> <span class="variable">scanLimit</span> <span class="operator">=</span> nebulaScanLimitController != <span class="literal">null</span> ? nebulaScanLimitController.getLimit() : <span class="built_in">this</span>.scanLimit;</span><br><span class="line">                        ((ScanLimitConfigIterator&lt;?&gt;) iterator).setScanLimit(scanLimit);</span><br><span class="line">                    &#125;</span><br><span class="line">                    Result&lt;RESP&gt; result = scanNext(dataProcessor, iterator);</span><br><span class="line">                    <span class="comment">//将查询结果组装成insert语句并发送到MQ</span></span><br><span class="line">                    writeResult(result);</span><br><span class="line">                    <span class="comment">//保存游标到数据库中</span></span><br><span class="line">                    saveNextCursor(result.getResp());</span><br><span class="line">                    <span class="comment">//控制扫描频率</span></span><br><span class="line">                    Optional.ofNullable(nebulaScanFlowController).ifPresent(flowController -&gt; flowController.controlConsumeFlow(storageIp));</span><br><span class="line">                &#125;</span><br></pre></td></tr></table></figure>
+
+<p>scan 任务自动缩减：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">autoReduceTask</span><span class="params">()</span> &#123;</span><br><span class="line">        log.debug(<span class="string">&quot;Start autoReduceTask....&quot;</span>);</span><br><span class="line">        <span class="comment">//从数据库中查询当前处理的任务列表</span></span><br><span class="line">        List&lt;NebulaDataScanTaskEntity&gt; taskList = queryProcessingTaskList();</span><br><span class="line">        <span class="comment">//遍历处理中的任务列表，统计每台机器当前处理的任务数量，如果超过限制，则停止超出任务</span></span><br><span class="line">        List&lt;NebulaDataScanTaskEntity&gt; needCancelTaskList = calCancelTaskList(taskList);</span><br><span class="line">        <span class="keyword">if</span> (needCancelTaskList.isEmpty()) &#123;</span><br><span class="line">            log.debug(<span class="string">&quot;AutoReduceTask is fail, needCancelTaskList is empty&quot;</span>);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        Set&lt;Long&gt; cancelTaskIdList = needCancelTaskList.stream().map(NebulaDataScanTaskEntity::getId).collect(Collectors.toSet());</span><br><span class="line">        log.info(<span class="string">&quot;Need cancel task list: &#123;&#125;&quot;</span>, cancelTaskIdList);</span><br><span class="line">        <span class="comment">//取消需要停止的任务</span></span><br><span class="line">        cancelSpecialTask(cancelTaskIdList);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//计算需要取消的任务列表</span></span><br><span class="line"><span class="keyword">private</span> List&lt;NebulaDataScanTaskEntity&gt; <span class="title function_">calCancelTaskList</span><span class="params">(List&lt;NebulaDataScanTaskEntity&gt; taskList)</span> &#123;</span><br><span class="line">        Map&lt;String, List&lt;NebulaDataScanTaskEntity&gt;&gt; nodeProcessingTaskCountMap = taskList.stream().collect(Collectors.groupingBy(NebulaDataScanTaskEntity::getScanStorageHost));</span><br><span class="line">        List&lt;NebulaDataScanTaskEntity&gt; needCancelTaskList = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;();</span><br><span class="line">        <span class="keyword">for</span> (Map.Entry&lt;String, List&lt;NebulaDataScanTaskEntity&gt;&gt; et : nodeProcessingTaskCountMap.entrySet()) &#123;</span><br><span class="line">            List&lt;NebulaDataScanTaskEntity&gt; nodeProcessingTaskList = et.getValue();</span><br><span class="line">            <span class="comment">//根据节点并发限制（也就是一个nebula-storaged节点能处理几个scan任务），计算需要停止的任务</span></span><br><span class="line">            <span class="type">int</span> <span class="variable">nodeConcurrencyLimit</span> <span class="operator">=</span> nebulaNodeConcurrencyLimitController.getNodeConcurrencyLimit(HostAndPort.fromString(et.getKey()).getHostText());</span><br><span class="line">            <span class="keyword">if</span> (nodeProcessingTaskList.size() &gt; nodeConcurrencyLimit) &#123;</span><br><span class="line">                <span class="comment">//这里根据id进行排序，为了解决多机器并发取消问题</span></span><br><span class="line">                Collections.sort(nodeProcessingTaskList, Comparator.comparing(NebulaDataScanTaskEntity::getScanTotalRowCount));</span><br><span class="line">                needCancelTaskList.addAll(nodeProcessingTaskList.subList(<span class="number">0</span>, nodeProcessingTaskList.size() - nodeConcurrencyLimit));</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> needCancelTaskList;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>流控配置信息：<br><img src="https://discuss-cdn.nebula-graph.com.cn/uploads/default/original/3X/f/9/f9e23385331cd3d46399717eac9fdf4c550033f6.png" alt="image|589x287"></p>
+<hr>
+<p>以上，便是我完成的内核升级工作的分享。如果有你想了解更具体的细节，请留言评论。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2025/02/14/%E8%AE%B0%E5%BD%95NebulaGraph%E4%BB%8E1-0%E5%8D%87%E7%BA%A7%E5%88%B03-6%E7%89%88%E6%9C%AC%E7%9A%84%E5%BF%83%E8%B7%AF%E5%8E%86%E7%A8%8B/" data-id="cm74iu8fh00000k6me4k3bibo" data-title="记录NebulaGraph从1.0升级到3.6版本的心路历程" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/NebulaGraph/" rel="tag">NebulaGraph</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%8D%87%E7%BA%A7/" rel="tag">升级</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%9B%BE%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">图数据库</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2025/02/14/NebulaGraph%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB%E7%B3%BB%E5%88%97%E4%B8%80/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">NebulaGraph源码解读系列一</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C++</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NebulaGraph/" rel="tag">NebulaGraph</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%87%E7%BA%A7/" rel="tag">升级</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9B%BE%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">图数据库</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9B%BE%E6%95%B0%E6%8D%AE%E5%BA%93-NebulaGraph-%E6%BA%90%E7%A0%81-C/" rel="tag">图数据库 NebulaGraph 源码 C++</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%BA%90%E7%A0%81/" rel="tag">源码</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/C/" style="font-size: 15px;">C++</a> <a href="/tags/NebulaGraph/" style="font-size: 20px;">NebulaGraph</a> <a href="/tags/%E5%8D%87%E7%BA%A7/" style="font-size: 15px;">升级</a> <a href="/tags/%E5%9B%BE%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 20px;">图数据库</a> <a href="/tags/%E5%9B%BE%E6%95%B0%E6%8D%AE%E5%BA%93-NebulaGraph-%E6%BA%90%E7%A0%81-C/" style="font-size: 10px;">图数据库 NebulaGraph 源码 C++</a> <a href="/tags/%E6%BA%90%E7%A0%81/" style="font-size: 15px;">源码</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">February 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/01/">January 2024</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/02/14/%E8%AE%B0%E5%BD%95NebulaGraph%E4%BB%8E1-0%E5%8D%87%E7%BA%A7%E5%88%B03-6%E7%89%88%E6%9C%AC%E7%9A%84%E5%BF%83%E8%B7%AF%E5%8E%86%E7%A8%8B/">记录NebulaGraph从1.0升级到3.6版本的心路历程</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/14/NebulaGraph%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB%E7%B3%BB%E5%88%97%E4%B8%80/">NebulaGraph源码解读系列一</a>
+          </li>
+        
+          <li>
+            <a href="/2024/01/29/raft-learing/">raft learing</a>
+          </li>
+        
+          <li>
+            <a href="/2024/01/29/hello-world/">Hello World</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2025 Jiangyiwang<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
